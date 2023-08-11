@@ -1,0 +1,25 @@
+{
+  "name": "repo-stat",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SyMind/repo-stat.git"
+  },
+  "author": "SyMind",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/SyMind/repo-stat/issues"
+  },
+  "homepage": "https://github.com/SyMind/repo-stat#readme",
+  "dependencies": {
+    "compute-quantile": "^1.0.1",
+    "memoize-fs": "^3.0.0",
+    "octokit": "^3.1.0"
+  }
+}

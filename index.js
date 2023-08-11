@@ -3,9 +3,32 @@ import * as path from 'path'
 import * as url from 'url'
 import quantile from 'compute-quantile'
 import memoizeFs from 'memoize-fs'
+import meow from 'meow'
 
 const __filename = url.fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
+
+const cli = meow(`
+    Usage
+        $ repo-stat repo
+
+    Examples
+        $ foo arco-design/arco-design
+    `, {
+    importMeta: import.meta
+})
+
+const input = cli.input[0]
+if (!input) {
+    console.log('repo is required')
+    process.exit(-1)
+}
+
+const [owner, repo] = input.split('/')
+if (!owner || !repo) {
+    console.log('You must enter the input in this format \'DouyinFE/semi-design\'')
+    process.exit(-1)
+}
 
 const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN })
 
@@ -22,8 +45,8 @@ async function getAllPulls() {
     do {
         console.log(`GET pulls page=${page} per_page=${per_page}`)
         pulls = await request('GET /repos/{owner}/{repo}/pulls', {
-            owner: 'ant-design',
-            repo: 'ant-design',
+            owner,
+            repo,
             state: 'all',
             per_page,
             page,
@@ -65,4 +88,4 @@ for (const pull of closedPulls) {
 
 console.log('pulls number', pulls.length)
 console.log('merged pulls number', spans.length)
-console.log('quantile', quantile(spans, 0.8))
+console.log('quantile', quantile(spans, 0.8).toFixed(2))

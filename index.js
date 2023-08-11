@@ -35,31 +35,59 @@ const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN })
 const memoizer = memoizeFs({ cachePath: path.join(__dirname, './.cache') })
 const request = await memoizer.fn(octokit.request)
 
+function getLastPage(link) {
+    const last = link.split(',')[1]
+    const lastLink = last.split(';')[0].trim()
+    const lastUrl = lastLink.substring(1, lastLink.length - 1)
+    const lastUrlObj = new URL(lastUrl)
+    return Number(lastUrlObj.searchParams.get('page'))
+}
+
 async function getAllPulls() {
     const result = []
-    let pulls = {
-        data: []
-    }
-    let page = 1
+
     const per_page = 100
-    do {
-        console.log(`GET pulls page=${page} per_page=${per_page}`)
-        pulls = await request('GET /repos/{owner}/{repo}/pulls', {
-            owner,
-            repo,
-            state: 'all',
-            per_page,
-            page,
-            headers: {
-                'X-GitHub-Api-Version': '2022-11-28'
-            }
-        })
-        if (pulls.status !== 200) {
-            process.exit(-1)
+
+    console.log(`GET pulls page=1 per_page=${per_page}`)
+    const pulls = await request('GET /repos/{owner}/{repo}/pulls', {
+        owner,
+        repo,
+        state: 'all',
+        per_page,
+        page: 1,
+        headers: {
+            'X-GitHub-Api-Version': '2022-11-28'
         }
-        result.push(...pulls.data)
-        page++
-    } while(pulls.data.length === 100)
+    })
+    if (pulls.status !== 200) {
+        process.exit(-1)
+    }
+    result.push(...pulls.data)
+
+    const lastPage = getLastPage(pulls.headers.link)
+    const tasks = []
+    for (let i = 2; i <= lastPage; i++) {
+        console.log(`GET pulls page=${i} per_page=${per_page}`)
+        tasks.push(
+            request('GET /repos/{owner}/{repo}/pulls', {
+                owner,
+                repo,
+                state: 'all',
+                per_page,
+                page: i,
+                headers: {
+                    'X-GitHub-Api-Version': '2022-11-28'
+                }
+            }).then(pulls => {
+                if (pulls.status !== 200) {
+                    process.exit(-1)
+                }
+                result.push(...pulls.data)
+            })
+        )
+    }
+    await Promise.all(tasks)
+
     return result
 }
 
@@ -91,29 +119,49 @@ console.log('merged pulls processing speed', quantile(pullSpans, 0.8).toFixed(2)
 
 async function getAllIssues() {
     const result = []
-    let issues = {
-        data: []
-    }
-    let page = 1
+
     const per_page = 100
-    do {
-        console.log(`GET issues page=${page} per_page=${per_page}`)
-        issues = await request('GET /repos/{owner}/{repo}/issues', {
-            owner,
-            repo,
-            state: 'all',
-            per_page,
-            page,
-            headers: {
-                'X-GitHub-Api-Version': '2022-11-28'
-            }
-        })
-        if (issues.status !== 200) {
-            process.exit(-1)
+
+    console.log(`GET issues page=1 per_page=${per_page}`)
+    const issues = await request('GET /repos/{owner}/{repo}/issues', {
+        owner,
+        repo,
+        state: 'all',
+        per_page,
+        page: 1,
+        headers: {
+            'X-GitHub-Api-Version': '2022-11-28'
         }
-        result.push(...issues.data)
-        page++
-    } while(issues.data.length === 100)
+    })
+    if (issues.status !== 200) {
+        process.exit(-1)
+    }
+    result.push(...issues.data)
+
+    const lastPage = getLastPage(issues.headers.link)
+    const tasks = []
+    for (let i = 2; i <= lastPage; i++) {
+        console.log(`GET issues page=${i} per_page=${per_page}`)
+        tasks.push(
+            request('GET /repos/{owner}/{repo}/issues', {
+                owner,
+                repo,
+                state: 'all',
+                per_page,
+                page: i,
+                headers: {
+                    'X-GitHub-Api-Version': '2022-11-28'
+                }
+            }).then(issues => {
+                if (issues.status !== 200) {
+                    process.exit(-1)
+                }
+                result.push(...issues.data)
+            })
+        )
+    }
+    await Promise.all(tasks)
+
     return result
 }
 

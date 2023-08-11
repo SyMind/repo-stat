@@ -67,7 +67,6 @@ const pulls = await getAllPulls()
 
 const openingPulls = []
 const closedPulls = []
-
 for (const pull of pulls) {
     if (pull.state === 'open') {
         openingPulls.push(pull)
@@ -77,15 +76,65 @@ for (const pull of pulls) {
     }
 }
 
-const spans = []
+const pullSpans = []
 for (const pull of closedPulls) {
     const { merged_at, created_at } = pull
     if (merged_at) {
         const span = (new Date(merged_at) - new Date(created_at)) / (24 * 60 * 60 * 1000)
-        spans.push(span)
+        pullSpans.push(span)
     }
 }
 
 console.log('pulls number', pulls.length)
-console.log('merged pulls number', spans.length)
-console.log('quantile', quantile(spans, 0.8).toFixed(2))
+console.log('merged pulls number', pullSpans.length)
+console.log('merged pulls processing speed', quantile(pullSpans, 0.8).toFixed(2))
+
+async function getAllIssues() {
+    const result = []
+    let issues = {
+        data: []
+    }
+    let page = 1
+    const per_page = 100
+    do {
+        console.log(`GET issues page=${page} per_page=${per_page}`)
+        issues = await request('GET /repos/{owner}/{repo}/issues', {
+            owner,
+            repo,
+            state: 'all',
+            per_page,
+            page,
+            headers: {
+                'X-GitHub-Api-Version': '2022-11-28'
+            }
+        })
+        if (issues.status !== 200) {
+            process.exit(-1)
+        }
+        result.push(...issues.data)
+        page++
+    } while(issues.data.length === 100)
+    return result
+}
+
+const issues = await getAllIssues()
+
+const bugIssues = []
+for (const issue of issues) {
+    if (issue.labels.some(label => label.name.toLowerCase().includes('bug'))) {
+        bugIssues.push(issue)
+    }
+}
+
+const issueSpans = []
+for (const issue of bugIssues) {
+    const { closed_at, created_at } = issue
+    if (closed_at) {
+        const span = (new Date(closed_at) - new Date(created_at)) / (24 * 60 * 60 * 1000)
+        issueSpans.push(span)
+    }
+}
+
+console.log('issues number', issues.length)
+console.log('closed bug issues number', issueSpans.length)
+console.log('closed bug issues processing speed', quantile(issueSpans, 0.8).toFixed(2))

@@ -28,9 +28,9 @@ GITHUB_TOKEN=your_github_token && npm run start
 
 | repo | all issues number | closed bug issues number | processing speed of issues (unit: days) |
 | - | - | - | - |
-| [Ant Design](https://github.com/ant-design/ant-design) | 42,164 | 1,999 | 18.92 |
-| [Arco Design](https://github.com/arco-design/arco-design) | 2,106 | 513 | 3.68 |
-| [Semi Design](https://github.com/DouyinFE/semi-design) | 1,719 | 330 | 36.44 |
+| [Ant Design](https://github.com/ant-design/ant-design) | 27,252 | 1,996 | 18.92 |
+| [Arco Design](https://github.com/arco-design/arco-design) | 1,078 | 200 | 7.12 |
+| [Semi Design](https://github.com/DouyinFE/semi-design) | 778 | 267 | 55.82 |
 
 ## PRs
 

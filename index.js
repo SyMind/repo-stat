@@ -162,7 +162,7 @@ async function getAllIssues() {
     }
     await Promise.all(tasks)
 
-    return result
+    return result.filter(issue => !issue.pull_request)
 }
 
 const issues = await getAllIssues()
